@@ -1,0 +1,36 @@
+version: '3.6'
+
+services:
+  # Proxies requests to internal services
+  reverse-proxy:
+    image: nginx:1.17.10
+    container_name: reverse_proxy_demo
+    depends_on:
+      - gitlab
+    volumes:
+      - ./reverse_proxy/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - '80:80'
+
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: "no"
+    hostname: 'my-server'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.eomiso-playground.net'
+        nginx['listen_port'] = 4080
+        nginx['listen_https'] = false
+        gitlab_rails['gitlab_shell_ssh_port'] = 4022
+        # Add any other gitlab.rb configuration here, each on its own line
+    ports:
+      - '10080:4080'
+      - '10443:443'
+      - '10022:22'
+    volumes:
+      - '$GITLAB_HOME/config:/etc/gitlab'
+      - '$GITLAB_HOME/logs:/var/log/gitlab'
+      - '$GITLAB_HOME/data:/var/opt/gitlab'
+    shm_size: '256m'
+
+
